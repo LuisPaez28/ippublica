@@ -6,15 +6,29 @@ st.set_page_config(page_title="Mi IP y Red", page_icon="🌐")
 st.title("🌐 Analizador de IP Pública y Red")
 
 def obtener_ip_cliente():
-    """Extrae la IP real del usuario leyendo los headers HTTP"""
+    """Extrae la IP leyendo los headers HTTP, pero filtra las IPs locales/privadas"""
     try:
         headers = st.context.headers
-        ip_proxy = headers.get("X-Forwarded-For")
+        ip_proxy = headers.get("X-Forwarded-For", "")
+        
         if ip_proxy:
-            # Tomamos la primera IP de la lista
-            return ip_proxy.split(',')[0].strip()
+            # Separamos todas las IPs que vengan en el encabezado
+            lista_ips = [ip.strip() for ip in ip_proxy.split(',')]
+            
+            for ip in lista_ips:
+                try:
+                    # Convertimos el texto a un objeto IP para analizarlo
+                    obj_ip = ipaddress.ip_address(ip)
+                    
+                    # Si la IP NO es privada (192.168.x.x, 10.x.x.x, etc.) ni loopback (127.0.0.1)
+                    if not obj_ip.is_private and not obj_ip.is_loopback:
+                        return ip  # ¡Encontramos la IP pública real!
+                except ValueError:
+                    continue # Si no es una IP válida, la ignoramos y pasamos a la siguiente
+                    
     except AttributeError:
         pass
+        
     return None
 
 @st.cache_data(ttl=60)
