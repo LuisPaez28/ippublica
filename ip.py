@@ -3,11 +3,8 @@ import streamlit.components.v1 as components
 
 st.set_page_config(page_title="Mi verdadera IP", page_icon="🌐")
 
-st.title("🌐 Analizador de Red (Modo Frontend)")
-st.write("Dado que el servidor en la nube bloquea las cabeceras, vamos a obligar a tu propio navegador a que busque y muestre tu IP pública.")
+st.title("Ip Publica")
 
-# Escribimos un pequeño componente en HTML y JavaScript
-# Este código NO se ejecuta en el servidor (Backend), se ejecuta en tu computadora (Frontend)
 codigo_html_js = """
 <div style="font-family: sans-serif; padding: 20px; border-radius: 10px; background-color: #f0f2f6; border: 1px solid #d1d5db;">
     <h3 style="margin-top:0; color: #31333F;">Tu verdadera IP Pública es:</h3>
@@ -37,4 +34,4 @@ codigo_html_js = """
 components.html(codigo_html_js, height=250)
 
 st.write("---")
-st.info("💡 **¿Por qué esto sí funciona?** Porque usamos JavaScript. La petición viaja de tu computadora B directo a `ipinfo.io`. El servidor en la nube ya no interviene para nada en la lectura de la IP.")
+st.info("by Luis Páez")
