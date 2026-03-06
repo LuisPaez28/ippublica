@@ -3,7 +3,7 @@ import streamlit.components.v1 as components
 import socket
 
 st.set_page_config(page_title="Mi verdadera IP", page_icon="🌐")
-st.title("Ip Publica")
+st.title("Ip")
 
 # Obtenemos la IP local real de la computadora/servidor donde está corriendo la app
 nombre_host = socket.gethostname()
@@ -17,9 +17,9 @@ ip_cabeceras = st.context.headers.get("X-Forwarded-For", "Conexión Directa (Sin
 
 col1, col2 = st.columns(2)
 with col1:
-    st.info(f"🖥️ **IP Local de la Máquina (Servidor):**\n\n`{ip_local_maquina}`\n\n*(Esta es la IP de la tarjeta de red de la computadora donde subiste la app).*")
+    st.info(f"🖥️ **IP Local de la Máquina (Servidor):**\n\n`{ip_local_maquina}`\n\n*(IP tarjeta de red de la computadora).*")
 with col2:
-    st.info(f"🕵️ **IP Detectada por la Nube (Cabeceras):**\n\n`{ip_cabeceras}`\n\n*(Esta es la IP que el balanceador de carga le reportaba a Python y causaba el error).*")
+    st.info(f"🕵️ **IP Detectada por la Nube (Cabeceras):**\n\n`{ip_cabeceras}`\n\n*(IP que el balanceador de carga reporta).*")
 
 st.write("---")
 # --- PARTE 2: TU IP PÚBLICA Y SEGMENTO (Frontend / JavaScript) ---
