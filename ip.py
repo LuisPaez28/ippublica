@@ -2,25 +2,53 @@ import streamlit as st
 import requests
 import ipaddress
 
-# Configuración de la página
 st.set_page_config(page_title="Mi IP y Red", page_icon="🌐")
 
 st.title("🌐 Analizador de IP Pública y Red")
-st.write("Esta aplicación web verifica la IP con la que sales a Internet y calcula tu segmento.")
+st.write("Esta aplicación verifica tu verdadera IP leyendo las cabeceras HTTP de tu conexión.")
 
-@st.cache_data(ttl=60) # Usamos caché para no saturar la API si recargas la página rápido
-def obtener_datos_red():
+def obtener_ip_cliente():
+    """Extrae la IP real del usuario leyendo los headers HTTP del servidor"""
     try:
-        # Usamos una API gratuita que nos da IP y detalles de red sin necesidad de registrarse
-        respuesta = requests.get('http://ip-api.com/json/')
+        # st.context.headers nos permite leer las cabeceras que envió el navegador
+        headers = st.context.headers
+        
+        # En entornos cloud, la IP original viene en 'X-Forwarded-For'
+        ip_proxy = headers.get("X-Forwarded-For")
+        
+        if ip_proxy:
+            # Si pasaste por varios proxies, vienen separados por coma. Tomamos el primero.
+            ip_real = ip_proxy.split(',')[0].strip()
+            return ip_real
+            
+    except AttributeError:
+        # Por si estás usando una versión muy antigua de Streamlit
+        st.warning("Tu versión de Streamlit no soporta lectura de cabeceras. Actualiza a >=1.37.0")
+        return None
+        
+    return None
+
+@st.cache_data(ttl=60)
+def obtener_datos_red(ip_objetivo=""):
+    try:
+        # Si tenemos la IP del cliente, se la pasamos a la API. 
+        # Si está vacío (ej. corriendo en local), la API tomará la del que hace la petición.
+        url = f'http://ip-api.com/json/{ip_objetivo}' if ip_objetivo else 'http://ip-api.com/json/'
+        
+        respuesta = requests.get(url)
         respuesta.raise_for_status()
         return respuesta.json()
     except requests.RequestException as e:
         return {"error": str(e)}
 
 if st.button("Verificar mi red ahora"):
-    with st.spinner('Analizando conexión...'):
-        datos = obtener_datos_red()
+    with st.spinner('Analizando cabeceras y conexión...'):
+        
+        # 1. Obtenemos tu IP desde el encabezado HTTP
+        ip_usuario = obtener_ip_cliente()
+        
+        # 2. Consultamos la API enviándole explícitamente tu IP
+        datos = obtener_datos_red(ip_usuario if ip_usuario else "")
         
         if "error" not in datos and datos.get('status') == 'success':
             ip_publica = datos['query']
@@ -28,13 +56,13 @@ if st.button("Verificar mi red ahora"):
             ciudad = datos['city']
             
             # --- CÁLCULO DEL SEGMENTO DE RED ---
-            # En redes públicas de Internet, los ISPs anuncian bloques (segmentos). 
-            # Aquí calculamos dinámicamente el segmento /24 (Clase C), que es la agrupación lógica más común.
             ip_obj = ipaddress.IPv4Interface(f"{ip_publica}/24")
             segmento_red = ip_obj.network
             
-            # Mostramos los resultados en la interfaz de Streamlit
-            st.success(f"**Tu IP Pública actual es:** {ip_publica}")
+            if ip_usuario:
+                st.success(f"**Tu IP Pública real (detectada por el servidor) es:** {ip_publica}")
+            else:
+                st.info(f"**IP detectada (Modo Local/Directo):** {ip_publica}")
             
             col1, col2 = st.columns(2)
             
@@ -43,12 +71,8 @@ if st.button("Verificar mi red ahora"):
                 st.info(f"📍 **Ubicación:**\n\n{ciudad}")
                 
             with col2:
-                # Mostramos la información técnica de la red
                 st.warning(f"🗺️ **Segmento de Red (Subnet /24):**\n\n{segmento_red}")
                 st.warning(f"🔢 **Rango de IPs de tu segmento:**\n\n{segmento_red[1]} - {segmento_red[-2]}")
                 
-            st.write("---")
-            st.write("💡 *Nota técnica: El segmento mostrado asume una máscara de subred de 24 bits (255.255.255.0). Los proveedores de internet (ISP) administran las redes en bloques más grandes (Autonomous Systems), pero a nivel de tu nodo geográfico, perteneces a este bloque.*")
-            
         else:
             st.error("Hubo un problema al conectar con el servicio de verificación.")
