@@ -3,7 +3,6 @@ import streamlit.components.v1 as components
 import socket
 
 st.set_page_config(page_title="Mi verdadera IP", page_icon="🌐")
-st.title("Ip")
 
 # Obtenemos la IP local real de la computadora/servidor donde está corriendo la app
 nombre_host = socket.gethostname()
@@ -23,7 +22,7 @@ with col2:
 
 st.write("---")
 # --- PARTE 2: TU IP PÚBLICA Y SEGMENTO (Frontend / JavaScript) ---
-st.subheader("Ip Publica")
+st.title("Ip Publica")
 
 codigo_html_js = """
 <div style="font-family: sans-serif; padding: 20px; border-radius: 10px; background-color: #f0f2f6; border: 1px solid #d1d5db;">
