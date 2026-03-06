@@ -1,9 +1,29 @@
 import streamlit as st
 import streamlit.components.v1 as components
+import socket
 
 st.set_page_config(page_title="Mi verdadera IP", page_icon="🌐")
-
 st.title("Ip Publica")
+
+# Obtenemos la IP local real de la computadora/servidor donde está corriendo la app
+nombre_host = socket.gethostname()
+try:
+    ip_local_maquina = socket.gethostbyname(nombre_host)
+except Exception:
+    ip_local_maquina = "No detectada"
+
+# Obtenemos lo que las cabeceras HTTP le dicen a Python
+ip_cabeceras = st.context.headers.get("X-Forwarded-For", "Conexión Directa (Sin Proxy)")
+
+col1, col2 = st.columns(2)
+with col1:
+    st.info(f"🖥️ **IP Local de la Máquina (Servidor):**\n\n`{ip_local_maquina}`\n\n*(Esta es la IP de la tarjeta de red de la computadora donde subiste la app).*")
+with col2:
+    st.info(f"🕵️ **IP Detectada por la Nube (Cabeceras):**\n\n`{ip_cabeceras}`\n\n*(Esta es la IP que el balanceador de carga le reportaba a Python y causaba el error).*")
+
+st.write("---")
+# --- PARTE 2: TU IP PÚBLICA Y SEGMENTO (Frontend / JavaScript) ---
+st.subheader("Ip Publica")
 
 codigo_html_js = """
 <div style="font-family: sans-serif; padding: 20px; border-radius: 10px; background-color: #f0f2f6; border: 1px solid #d1d5db;">
@@ -31,7 +51,7 @@ codigo_html_js = """
 """
 
 # Renderizamos el componente de HTML/JS dentro de Streamlit
-components.html(codigo_html_js, height=250)
+components.html(codigo_html_js, height=260)
 
 st.write("---")
 st.info("by Luis Páez")
